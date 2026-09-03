@@ -32,6 +32,14 @@
   header h1 { font-size: 26px; font-weight: 700; letter-spacing: 1px; }
   header h1 .accent { color: var(--primary); }
   header p { color: var(--muted); margin-top: 8px; font-size: 14px; line-height: 1.7; }
+  .back-row { text-align: left; margin-bottom: 12px; }
+  .back {
+    display: inline-block; padding: 7px 16px; border-radius: 999px;
+    background: var(--primary-soft); color: var(--primary);
+    border: 1px solid var(--line); font-size: 13px; font-weight: 600;
+    text-decoration: none;
+  }
+  .back:hover { background: var(--primary); color: #fff; }
 
   .card {
     background: var(--card);
@@ -131,6 +139,7 @@
 </head>
 <body>
 <div class="wrap">
+  <p class="back-row"><a class="back" href="../index.html">← 返回主页</a></p>
   <header>
     <h1>🔐 文本<span class="accent">加密</span>工具</h1>
     <p>用「密码中的字符集」对原文重新排列编码，生成完全由密码字符组成的密文</p>

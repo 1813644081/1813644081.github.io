@@ -19,6 +19,12 @@
     code, pre { background: #11151b; }
   }
   h1 { margin-bottom: 4px; }
+  .back {
+    display: inline-block; margin-bottom: 14px;
+    padding: 7px 16px; border-radius: 8px;
+    background: #2f6fed; color: #fff; font-size: 13px; text-decoration: none;
+  }
+  .back:hover { filter: brightness(1.08); }
   .sub { opacity: .7; margin: 0 0 20px; }
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
@@ -49,6 +55,7 @@
 </style>
 </head>
 <body>
+  <a class="back" href="../index.html">← 返回主页</a>
   <h1>🔍 图片隐藏</h1>
   <p class="sub">把一张图片原样藏进另一张 PNG 里(不改像素,图片照常打开),也能再解出来。</p>
 
