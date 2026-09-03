@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>png-cloak · PNG 藏图工具</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+    margin: 0; padding: 24px; max-width: 980px; margin-inline: auto;
+    background: #f4f6f9; color: #1d2430;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { background: #171b23; color: #dde3ee; }
+    .card { background: #20262f; border-color: #2d3642; }
+    input, button { background: #262d38; color: #e6ecf5; border-color: #3a4554; }
+    code, pre { background: #11151b; }
+  }
+  h1 { margin-bottom: 4px; }
+  .sub { opacity: .7; margin: 0 0 20px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+  .card {
+    background: #fff; border: 1px solid #dfe4ea; border-radius: 12px; padding: 16px 18px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .card h2 { margin: 0; font-size: 17px; }
+  label { font-size: 13px; opacity: .85; display: block; margin-bottom: 4px; }
+  input[type=file] { width: 100%; font-size: 12px; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .row input[type=text] { width: 90px; padding: 6px; }
+  button {
+    padding: 8px 14px; border-radius: 8px; border: 1px solid #c8d0da; cursor: pointer;
+    background: #eef2f6; font-size: 14px;
+  }
+  button.primary { background: #2f6fed; color: #fff; border-color: #2f6fed; }
+  button:hover { filter: brightness(1.05); }
+  .previews { display: flex; gap: 10px; flex-wrap: wrap; min-height: 40px; }
+  .previews figure { margin: 0; text-align: center; font-size: 12px; }
+  .previews img { max-width: 160px; max-height: 120px; border-radius: 6px; border: 1px solid #c8d0da; background: #eee; }
+  pre.log {
+    background: #f0f2f5; border-radius: 8px; padding: 10px; margin: 0;
+    font-size: 12px; white-space: pre-wrap; word-break: break-all; min-height: 60px; max-height: 260px; overflow: auto;
+  }
+  details { font-size: 13px; opacity: .9; }
+  .warn { color: #c2571a; font-size: 12.5px; }
+</style>
+</head>
+<body>
+  <h1>🔍 png-cloak</h1>
+  <p class="sub">把一张图片原样藏进另一张 PNG 里(不改像素,图片照常打开),也能再解出来。全程本地处理,不上传任何文件。</p>
+
+  <div class="grid">
+    <!-- 隐藏 -->
+    <div class="card">
+      <h2>① 隐藏:把图片藏进 PNG</h2>
+      <div>
+        <label>载体 PNG(藏到哪里):</label>
+        <input type="file" id="carrier" accept=".png,image/png">
+      </div>
+      <div>
+        <label>要隐藏的文件(可以是任意图片):</label>
+        <input type="file" id="secret" accept="image/*,.png,.jpg,.jpeg,.gif,.webp">
+      </div>
+      <div class="row">
+        <label style="margin:0">块名:</label>
+        <input type="text" id="nameE" value="hide" maxlength="4" pattern="[A-Za-z]{4}" title="4 个英文字母,建议全小写">
+        <button class="primary" id="btnHide">隐藏并下载</button>
+      </div>
+      <div class="previews" id="prevE"></div>
+      <pre class="log" id="logE">等待选择文件…</pre>
+    </div>
+
+    <!-- 提取 -->
+    <div class="card">
+      <h2>② 提取:解开 PNG 里的隐藏图</h2>
+      <div>
+        <label>选择带隐藏内容的 PNG:</label>
+        <input type="file" id="box" accept=".png,image/png">
+      </div>
+      <div class="row">
+        <label style="margin:0">块名(留空自动识别):</label>
+        <input type="text" id="nameX" placeholder="自动" maxlength="4">
+        <button class="primary" id="btnExtract">提取</button>
+      </div>
+      <div class="previews" id="prevX"></div>
+      <pre class="log" id="logX">等待选择文件…</pre>
+    </div>
+  </div>
+
+  <div class="grid" style="margin-top:16px">
+    <!-- LSB 隐藏 -->
+    <div class="card">
+      <h2>③ LSB 隐藏:写进像素低位(肉眼无痕)</h2>
+      <div>
+        <label>载体 PNG:</label>
+        <input type="file" id="carrierL" accept=".png,image/png">
+      </div>
+      <div>
+        <label>要隐藏的文件:</label>
+        <input type="file" id="secretL" accept="*/*">
+      </div>
+      <div class="row">
+        <label style="margin:0">位数:</label>
+        <input type="number" id="bitsL" value="3" min="1" max="7" style="width:70px" title="每通道写几位(1-7),越大容量越大、越明显">
+        <button class="primary" id="btnHideLsb">LSB 隐藏并下载</button>
+      </div>
+      <pre class="log" id="logEL">等待选择文件…</pre>
+      <div class="warn">网页版会经 canvas 重编码:角色卡 tEXt 会丢,请用 CLI;转 JPEG 也会毁掉低位数据。</div>
+    </div>
+
+    <!-- LSB 提取 -->
+    <div class="card">
+      <h2>④ LSB 提取:解开像素里的秘密</h2>
+      <div>
+        <label>选择带 LSB 载荷的 PNG:</label>
+        <input type="file" id="boxL" accept=".png,image/png">
+      </div>
+      <div class="row">
+        <label style="margin:0">位数(留空自动):</label>
+        <input type="number" id="bitsX" placeholder="自动" min="1" max="7" style="width:90px">
+        <button class="primary" id="btnExtractLsb">LSB 提取</button>
+      </div>
+      <pre class="log" id="logXL">等待选择文件…</pre>
+    </div>
+  </div>
+
+  <details style="margin-top:16px">
+    <summary>原理与说明(点开)</summary>
+    <p>PNG 由「8 字节签名 + 一串 chunk」组成,每个 chunk 是 <code>长度(4B) + 类型名(4B) + 数据 + CRC32(4B)</code>。
+    本工具把秘密文件的<strong>原始字节</strong>作为一个自定义块(默认名 <code>hide</code>)插到 IEND 之前。
+    不认识的块对 PNG 解码器而言属于「可选块」,按规范会被安全忽略,所以载体图、角色卡数据(tEXt)都不受影响;
+    提取时原样取出,字节与藏之前完全一致。注意:这<strong>不是加密</strong>,只是隐藏。</p>
+  </details>
+
+<script>
+'use strict';
+// ================= 纯 JS:PNG chunk 读写 + CRC32(与 cli 同款算法) ============
+const SIG = [0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a];
+let CRC_TABLE = null;
+function crc32(parts) {
+  if (!CRC_TABLE) {
+    CRC_TABLE = new Uint32Array(256);
+    for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; CRC_TABLE[n] = c >>> 0; }
+  }
+  const list = Array.isArray(parts) ? parts : [parts];
+  let crc = 0xffffffff;
+  for (const p of list) for (let i = 0; i < p.length; i++) crc = CRC_TABLE[(crc ^ p[i]) & 0xff] ^ (crc >>> 8);
+  return (crc ^ 0xffffffff) >>> 0;
+}
+function isPng(b) { return b.length >= 8 && SIG.every((v, i) => b[i] === v); }
+function parsePng(bytes) {
+  if (!isPng(bytes)) throw new Error('不是合法 PNG(签名不对)');
+  const chunks = []; let off = 8;
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  while (off + 8 <= bytes.length) {
+    const len = view.getUint32(off);
+    if (off + 12 + len > bytes.length) throw new Error('PNG 损坏:块越界');
+    const name = String.fromCharCode(bytes[off+4], bytes[off+5], bytes[off+6], bytes[off+7]);
+    chunks.push({ name, data: bytes.subarray(off+8, off+8+len), offset: off });
+    off += 12 + len;
+    if (name === 'IEND') break;
+  }
+  if (!chunks.some(c => c.name === 'IEND')) throw new Error('PNG 损坏:缺 IEND');
+  return chunks;
+}
+function buildPng(chunks) {
+  let total = 8;
+  for (const c of chunks) total += 12 + c.data.length;
+  const out = new Uint8Array(total);
+  for (let i = 0; i < 8; i++) out[i] = SIG[i];
+  const view = new DataView(out.buffer); let off = 8;
+  for (const c of chunks) {
+    view.setUint32(off, c.data.length); off += 4;
+    const nb = new Uint8Array(4);
+    for (let i = 0; i < 4; i++) nb[i] = c.name.charCodeAt(i);
+    out.set(nb, off); off += 4;
+    out.set(c.data, off); off += c.data.length;
+    view.setUint32(off, crc32([nb, c.data])); off += 4;
+  }
+  return out;
+}
+function describeBytes(b) {
+  const has = (s, o) => { o = o || 0; for (let i = 0; i < s.length; i++) if (b[o+i] !== s.charCodeAt(i)) return false; return true; };
+  if (isPng(b)) return { label: 'PNG 图片', ext: 'png' };
+  if (b[0]===0xff && b[1]===0xd8 && b[2]===0xff) return { label: 'JPEG 图片', ext: 'jpg' };
+  if (has('GIF87a') || has('GIF89a')) return { label: 'GIF 图片', ext: 'gif' };
+  if (has('RIFF') && has('WEBP', 8)) return { label: 'WebP 图片', ext: 'webp' };
+  if (has('%PDF')) return { label: 'PDF', ext: 'pdf' };
+  return { label: '未知/二进制', ext: 'bin' };
+}
+function detectHidden(chunks) {
+  const skip = new Set(['IHDR','PLTE','IDAT','IEND','tEXt','zTXt','iTXt','bKGD','cHRM','gAMA','hIST','iCCP','pHYs','sBIT','sPLT','sRGB','tIME','eXIf','acTL','fcTL','fdAT']);
+  for (const c of chunks) {
+    if (skip.has(c.name)) continue;
+    const m = describeBytes(c.data);
+    if (m.ext !== 'bin') return { chunk: c, meta: m };
+  }
+  return null;
+}
+function fmt(n) { if (n < 1024) return n + ' B'; if (n < 1048576) return (n/1024).toFixed(1) + ' KB'; return (n/1048576).toFixed(2) + ' MB'; }
+// 结构自检(浏览器无 zlib,只做签名+逐块CRC)
+function crcCheck(chunks, view) {
+  let bad = 0;
+  for (const c of chunks) {
+    const stored = view.getUint32(c.offset + 8 + c.data.length);
+    const nb = new Uint8Array([c.name.charCodeAt(0), c.name.charCodeAt(1), c.name.charCodeAt(2), c.name.charCodeAt(3)]);
+    if (crc32([nb, c.data]) !== stored) bad++;
+  }
+  return bad === 0;
+}
+function download(bytes, filename, mime) {
+  const blob = new Blob([bytes], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 8000);
+}
+function setPreview(container, bytes, caption) {
+  container.innerHTML = '';
+  if (!bytes) return;
+  const fig = document.createElement('figure');
+  const img = document.createElement('img');
+  const blob = new Blob([bytes], { type: 'image/png' });
+  img.src = URL.createObjectURL(blob);
+  const cap = document.createElement('figcaption');
+  cap.textContent = caption || fmt(bytes.length);
+  fig.append(img, cap); container.appendChild(fig);
+}
+function logTo(pre, msg) { pre.textContent = typeof msg === 'string' ? msg : msg.join('\n'); }
+async function readFile(file) { return new Uint8Array(await file.arrayBuffer()); }
+
+// ================= 隐藏 =================
+const $ = (id) => document.getElementById(id);
+$('btnHide').addEventListener('click', async () => {
+  const log = $('logE');
+  const carrierFile = $('carrier').files[0];
+  const secretFile = $('secret').files[0];
+  if (!carrierFile || !secretFile) { logTo(log, '请先选择载体 PNG 和要隐藏的文件。'); return; }
+  const name = $('nameE').value.trim();
+  if (!/^[A-Za-z]{4}$/.test(name)) { logTo(log, '块名必须是 4 个英文字母。'); return; }
+  try {
+    const carrier = await readFile(carrierFile);
+    const secret = await readFile(secretFile);
+    if (!isPng(carrier)) throw new Error('载体不是 PNG');
+    const chunks = parsePng(carrier);
+    const before = chunks.length;
+    // 覆盖旧的同名块
+    for (let i = chunks.length - 1; i >= 0; i--) if (chunks[i].name === name) chunks.splice(i, 1);
+    const iend = chunks.findIndex(c => c.name === 'IEND');
+    chunks.splice(iend < 0 ? chunks.length : iend, 0, { name, data: new Uint8Array(secret) });
+    const out = buildPng(chunks);
+    const meta = describeBytes(secret);
+    const view = new DataView(out.buffer, out.byteOffset, out.byteLength);
+    const lines = [
+      '✓ 完成!',
+      `  藏入: ${fmt(secret.length)} 的 ${meta.label}(chunk ${before} → ${chunks.length})`,
+      `  体积: ${fmt(carrier.length)} → ${fmt(out.length)}`,
+      `  块: ${chunks.map(c => c.name).join(', ')}`,
+      `  CRC 自检: ${crcCheck(chunks, view) ? '通过 ✓' : '失败 ✗'}`,
+    ];
+    logTo(log, lines);
+    setPreview($('prevE'), out, '产物预览(能正常显示说明没破坏图片)');
+    const outName = carrierFile.name.replace(/\.png$/i, '') + '_带隐藏.png';
+    download(out, outName, 'image/png');
+  } catch (e) { logTo(log, '[错误] ' + e.message); }
+});
+
+// ================= 提取 =================
+async function doExtract() {
+  const log = $('logX');
+  const boxFile = $('box').files[0];
+  if (!boxFile) { logTo(log, '请先选择一个 PNG 文件。'); return; }
+  const want = $('nameX').value.trim();
+  try {
+    const bytes = await readFile(boxFile);
+    const chunks = parsePng(bytes);
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    let found = null, meta = null;
+    if (want) {
+      found = chunks.find(c => c.name === want) || null;
+      if (!found) throw new Error('没有名为 "' + want + '" 的块。块列表: ' + chunks.map(c => c.name).join(', '));
+      meta = describeBytes(found.data);
+    } else {
+      const hit = detectHidden(chunks);
+      if (!hit) throw new Error('未自动识别到隐藏内容;可手动填块名再试。块列表: ' + chunks.map(c => c.name).join(', '));
+      found = hit.chunk; meta = hit.meta;
+    }
+    const lines = [
+      `✓ 找到块 [${found.name}](${fmt(found.data.length)}),内容是 ${meta.label}`,
+      `  块: ${chunks.map(c => c.name).join(', ')}`,
+      `  CRC 自检: ${crcCheck(chunks, view) ? '通过 ✓' : '失败 ✗'}`,
+    ];
+    logTo(log, lines);
+    const data = new Uint8Array(found.data); // 拷贝出独立缓冲,便于 Blob
+    setPreview($('prevX'), data, '解出的图');
+    const outName = boxFile.name.replace(/\.[^.]+$/, '') + '_解出.' + meta.ext;
+    download(data, outName, 'application/octet-stream');
+  } catch (e) { logTo(log, '[错误] ' + e.message); }
+}
+$('btnExtract').addEventListener('click', doExtract);
+// 换文件时自动尝试一次
+$('box').addEventListener('change', () => { $('logX').textContent = '已选文件,点「提取」。'; $('prevX').innerHTML = ''; });
+$('carrier').addEventListener('change', () => { $('logE').textContent = '已选载体,再选要藏的文件后点「隐藏并下载」。'; });
+$('secret').addEventListener('change', async () => {
+  const f = $('secret').files[0];
+  if (f) setPreview($('prevE'), await readFile(f), '要藏的内容');
+});
+
+// ================= LSB 引擎(与 cli.mjs / lsb.mjs 同款算法) =================
+function lsbCapacity2(w, h, bits) { return Math.floor(w * h * 3 * bits / 8); }
+function lsbBuildContainer(payload, name, bits) {
+  const enc = new TextEncoder();
+  let clean = String(name || 'payload.bin').replace(/[\\/:*?"<>|\x00-\x1f]/g, '_').slice(0, 240) || 'payload.bin';
+  const nameBytes = enc.encode(clean);
+  if (nameBytes.length > 255) throw new Error('文件名过长');
+  const head = new Uint8Array([0x70, 0x63, 0x6c, 0x31, 1, bits, nameBytes.length]); // 'pcl1'
+  const len = payload.length;
+  const total = new Uint8Array(head.length + nameBytes.length + 4 + payload.length);
+  let o = 0;
+  total.set(head, o); o += head.length;
+  total.set(nameBytes, o); o += nameBytes.length;
+  total[o++] = (len >>> 24) & 255; total[o++] = (len >>> 16) & 255;
+  total[o++] = (len >>> 8) & 255; total[o++] = len & 255;
+  total.set(payload, o);
+  return total;
+}
+function lsbEmbed(rgba, payload, name, bits) {
+  const container = lsbBuildContainer(payload, name, bits);
+  const maxSlots = Math.floor(rgba.length / 4) * 3;
+  if (container.length * 8 > maxSlots * bits) {
+    throw new Error('容量不足:该图用 ' + bits + ' 位/通道最多存 ' + Math.floor(maxSlots * bits / 8) + ' 字节');
+  }
+  const out = new Uint8Array(rgba);
+  const mask = (1 << bits) - 1;
+  const slots = Math.ceil(container.length * 8 / bits);
+  const bitAt = (i) => (i < container.length * 8 ? (container[i >> 3] >> (7 - (i & 7))) & 1 : 0);
+  for (let k = 0; k < slots; k++) {
+    const pos = Math.floor(k / 3) * 4 + (k % 3);
+    let v = 0;
+    for (let j = 0; j < bits; j++) v = (v << 1) | bitAt(k * bits + j);
+    out[pos] = (out[pos] & ~mask) | v;
+  }
+  return out;
+}
+function lsbExtract(rgba, bits) {
+  const maxSlots = Math.floor(rgba.length / 4) * 3;
+  const maxBytes = Math.floor(maxSlots / 8);
+  function makeReader(b) {
+    const mask = (1 << b) - 1;
+    let slot = 0, acc = 0, accBits = 0;
+    function pull() {
+      if (slot >= maxSlots) throw new Error('图片被截断:像素不足');
+      const pos = Math.floor(slot / 3) * 4 + (slot % 3);
+      slot++;
+      return rgba[pos] & mask;
+    }
+    return {
+      bytes(count) {
+        if (count > maxBytes) throw new Error('数据超出图片容量');
+        const out = new Uint8Array(count);
+        for (let i = 0; i < count; i++) {
+          while (accBits < 8) { acc = (acc << b) | pull(); accBits += b; }
+          out[i] = (acc >>> (accBits - 8)) & 0xff;
+          accBits -= 8;
+          acc &= (1 << accBits) - 1;
+        }
+        return out;
+      }
+    };
+  }
+  const dec = new TextDecoder();
+  function tryParse(b) {
+    const r = makeReader(b);
+    const head = r.bytes(7);
+    if (head[0] !== 0x70 || head[1] !== 0x63 || head[2] !== 0x6c || head[3] !== 0x31) return null;
+    if (head[4] !== 1 || head[5] < 1 || head[5] > 7) return null;
+    const nameLen = head[6];
+    const nb = r.bytes(nameLen + 4);
+    const name = dec.decode(nb.subarray(0, nameLen));
+    const len = ((nb[nameLen] << 24) | (nb[nameLen + 1] << 16) | (nb[nameLen + 2] << 8) | nb[nameLen + 3]) >>> 0;
+    if (len > maxBytes - 7 - nameLen - 4) return null;
+    return { bits: head[5], name, payload: r.bytes(len) };
+  }
+  const list = (bits !== null && bits !== '') ? [Number(bits)] : [7, 6, 5, 4, 3, 2, 1];
+  let lastErr = null;
+  for (const b of list) {
+    try { const res = tryParse(b); if (res && res.bits === b) return res; }
+    catch (e) { lastErr = e; }
+  }
+  throw new Error(lastErr ? lastErr.message : '没有找到 pcl1 格式的 LSB 载荷(该图可能没藏过,或已被压缩破坏)');
+}
+async function loadRgba(file) {
+  let bmp = null;
+  if ('createImageBitmap' in window) { try { bmp = await createImageBitmap(file); } catch (e) { bmp = null; } }
+  const c = document.createElement('canvas');
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  let w, h;
+  if (bmp) {
+    w = bmp.width; h = bmp.height;
+    c.width = w; c.height = h;
+    ctx.drawImage(bmp, 0, 0);
+    if (bmp.close) bmp.close();
+  } else {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error('浏览器无法解码该图片')); img.src = url; });
+    URL.revokeObjectURL(url);
+    w = img.naturalWidth; h = img.naturalHeight;
+    c.width = w; c.height = h;
+    ctx.drawImage(img, 0, 0);
+  }
+  if (!w || !h) throw new Error('图片尺寸为空');
+  return { w, h, data: ctx.getImageData(0, 0, w, h).data };
+}
+async function rgbaToPngBlob(w, h, data) {
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const ctx = c.getContext('2d');
+  ctx.putImageData(new ImageData(new Uint8ClampedArray(data), w, h), 0, 0);
+  return await new Promise((res, rej) => c.toBlob((b) => b ? res(b) : rej(new Error('浏览器无法编码 PNG')), 'image/png'));
+}
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 8000);
+}
+function previewBlob(container, blob, caption) {
+  container.innerHTML = '';
+  if (!blob) return;
+  const fig = document.createElement('figure');
+  const img = document.createElement('img');
+  img.src = URL.createObjectURL(blob);
+  const cap = document.createElement('figcaption');
+  cap.textContent = caption || '';
+  fig.append(img, cap);
+  container.appendChild(fig);
+}
+
+// ---- LSB 隐藏 ----
+$('btnHideLsb').addEventListener('click', async () => {
+  const log = $('logEL');
+  const carrierFile = $('carrierL').files[0];
+  const secretFile = $('secretL').files[0];
+  if (!carrierFile || !secretFile) { logTo(log, '请先选择载体 PNG 和要藏的文件。'); return; }
+  const bits = Number($('bitsL').value);
+  if (!Number.isInteger(bits) || bits < 1 || bits > 7) { logTo(log, '位数必须是 1~7 的整数。'); return; }
+  try {
+    const { w, h, data } = await loadRgba(carrierFile);
+    const payload = new Uint8Array(await secretFile.arrayBuffer());
+    const cap = lsbCapacity2(w, h, bits);
+    if (payload.length > cap) throw new Error('容量不足:秘密文件 ' + fmt(payload.length) + ',该图用 ' + bits + ' 位/通道最多存 ' + fmt(cap));
+    const embedded = lsbEmbed(data, payload, secretFile.name, bits);
+    const blob = await rgbaToPngBlob(w, h, embedded);
+    logTo(log, [
+      '✓ LSB 隐写完成!',
+      `  藏入: ${fmt(payload.length)}(${bits} 位/通道),图片 ${w}x${h},容量 ${fmt(cap)}`,
+      `  产物大小: ${fmt(blob.size)}`,
+    ]);
+    const outName = carrierFile.name.replace(/\.png$/i, '') + '_lsb.png';
+    downloadBlob(blob, outName);
+    previewBlob($('prevE'), blob, '产物预览(肉眼看不出藏了东西)');
+  } catch (e) { logTo(log, '[错误] ' + e.message); }
+});
+
+// ---- LSB 提取 ----
+$('btnExtractLsb').addEventListener('click', async () => {
+  const log = $('logXL');
+  const boxFile = $('boxL').files[0];
+  if (!boxFile) { logTo(log, '请先选择一个 PNG 文件。'); return; }
+  const bitsRaw = $('bitsX').value.trim();
+  const bits = bitsRaw === '' ? null : Number(bitsRaw);
+  if (bits !== null && (!Number.isInteger(bits) || bits < 1 || bits > 7)) { logTo(log, '位数必须是 1~7 或留空自动。'); return; }
+  try {
+    const { w, h, data } = await loadRgba(boxFile);
+    const r = lsbExtract(data, bits);
+    const payload = new Uint8Array(r.payload);
+    const meta = describeBytes(payload);
+    logTo(log, [
+      `✓ 提取成功!${bits === null ? '(自动探测到 ' + r.bits + ' 位)' : ''}`,
+      `  原文件名: ${r.name} | 大小: ${fmt(payload.length)} | 类型: ${meta.label}`,
+    ]);
+    const mime = { png: 'image/png', jpg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp' }[meta.ext] || 'application/octet-stream';
+    const blob = new Blob([payload], { type: mime });
+    if (meta.ext === 'png' || meta.ext === 'jpg' || meta.ext === 'gif' || meta.ext === 'webp') {
+      previewBlob($('prevX'), blob, '解出的图');
+    }
+    const base = String(r.name).replace(/\.[^.]+$/, '') || 'extracted';
+    downloadBlob(blob, base + '.' + meta.ext);
+  } catch (e) { logTo(log, '[错误] ' + e.message); }
+});
+$('boxL').addEventListener('change', () => { $('logXL').textContent = '已选文件,点「LSB 提取」。'; });
+$('secretL').addEventListener('change', async () => {
+  const f = $('secretL').files[0];
+  if (f) setPreview($('prevE'), await readFile(f), '要藏的内容');
+});
+</script>
+</body>
+</html>
