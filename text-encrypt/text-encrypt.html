@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>文本加密工具 · 密码字符集加密</title>
+<style>
+  :root {
+    --bg: #eef1f8;
+    --card: #ffffff;
+    --ink: #1f2430;
+    --muted: #7a8194;
+    --line: #e4e8f2;
+    --primary: #4f6ef7;
+    --primary-2: #3a58e6;
+    --primary-soft: #eef1ff;
+    --danger: #e5484d;
+    --ok: #16a34a;
+    --shadow: 0 8px 28px rgba(31, 36, 48, 0.08);
+    --r: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, -apple-system, sans-serif;
+    background: linear-gradient(165deg, #e9eefc 0%, var(--bg) 45%, #f7f8fc 100%);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 36px 18px 60px;
+  }
+  .wrap { width: 100%; max-width: 900px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 26px; }
+  header h1 { font-size: 26px; font-weight: 700; letter-spacing: 1px; }
+  header h1 .accent { color: var(--primary); }
+  header p { color: var(--muted); margin-top: 8px; font-size: 14px; line-height: 1.7; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    box-shadow: var(--shadow);
+    padding: 18px 20px;
+  }
+  .card + .card { margin-top: 18px; }
+
+  .section-title {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px; gap: 10px; flex-wrap: wrap;
+  }
+  .section-title .t {
+    font-size: 15px; font-weight: 600;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title .t .num {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--primary); color: #fff; font-size: 12px;
+    display: inline-flex; align-items: center; justify-content: center; font-weight: 700;
+  }
+  .toolbar { display: flex; align-items: center; gap: 8px; }
+  .btn-mini {
+    border: 1px solid var(--line); background: #fafbfe; color: var(--muted);
+    font-size: 12px; padding: 5px 10px; border-radius: 8px;
+    cursor: pointer; transition: .15s; font-family: inherit;
+  }
+  .btn-mini:hover { color: var(--primary); border-color: var(--primary); }
+
+  textarea {
+    width: 100%; height: 230px; resize: vertical;
+    border: 1px solid var(--line); border-radius: 10px;
+    padding: 12px 14px; font-size: 14px; line-height: 1.7;
+    font-family: inherit; color: var(--ink); background: #fbfcff;
+    outline: none; transition: .15s;
+  }
+  textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79, 110, 247, .15);
+    background: #fff;
+  }
+  .stats { font-size: 12px; color: var(--muted); margin-top: 8px; min-height: 16px; }
+
+  .pwd-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .pwd-input { flex: 1; min-width: 240px; }
+  .pwd-input input {
+    width: 100%; border: 1px solid var(--line); border-radius: 10px;
+    padding: 12px 14px; font-size: 15px; font-family: inherit;
+    outline: none; background: #fbfcff; transition: .15s;
+  }
+  .pwd-input input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79, 110, 247, .15);
+    background: #fff;
+  }
+  .pwd-info { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.7; }
+
+  .actions { display: flex; gap: 12px; }
+  .btn {
+    border: none; border-radius: 10px; padding: 12px 26px;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    transition: .15s; font-family: inherit;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn-encrypt {
+    background: linear-gradient(135deg, var(--primary), var(--primary-2));
+    color: #fff; box-shadow: 0 4px 14px rgba(79, 110, 247, .35);
+  }
+  .btn-encrypt:hover { filter: brightness(1.06); }
+  .btn-decrypt { background: #fff; color: var(--primary); border: 1.5px solid var(--primary); }
+  .btn-decrypt:hover { background: var(--primary-soft); }
+
+  footer {
+    margin-top: 30px; color: var(--muted);
+    font-size: 12.5px; line-height: 2; text-align: center;
+  }
+  footer code {
+    background: #fff; border: 1px solid var(--line);
+    border-radius: 6px; padding: 1px 6px; font-size: 12px;
+  }
+  footer .warn { color: var(--danger); }
+
+  #toast {
+    position: fixed; top: 22px; left: 50%;
+    transform: translateX(-50%) translateY(-16px);
+    background: var(--ink); color: #fff;
+    padding: 10px 18px; border-radius: 10px; font-size: 14px;
+    opacity: 0; pointer-events: none; transition: .25s;
+    z-index: 99; max-width: 80vw; box-shadow: var(--shadow);
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast.err { background: var(--danger); }
+  #toast.ok { background: var(--ok); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🔐 文本<span class="accent">加密</span>工具</h1>
+    <p>用「密码中的字符集」对原文重新排列编码，生成完全由密码字符组成的密文</p>
+  </header>
+
+  <!-- 1. 原文区 -->
+  <section class="card">
+    <div class="section-title">
+      <span class="t"><span class="num">1</span>原文区</span>
+      <div class="toolbar">
+        <button class="btn-mini" id="clearPlain">清空</button>
+        <button class="btn-mini" id="copyPlain">复制</button>
+      </div>
+    </div>
+    <textarea id="plain" placeholder="在这里输入需要加密的原文，支持中文、英文、数字、Emoji 等任意文本…"></textarea>
+    <div class="stats" id="plainStats"></div>
+  </section>
+
+  <!-- 2. 密码区 -->
+  <section class="card">
+    <div class="section-title">
+      <span class="t"><span class="num">2</span>密码区</span>
+      <span class="pwd-info" id="pwdInfo"></span>
+    </div>
+    <div class="pwd-row">
+      <div class="pwd-input">
+        <input id="pwd" type="text" value="deepseek"
+               placeholder="请输入任意密码，例如：deepseek"
+               autocomplete="off" spellcheck="false" />
+      </div>
+      <div class="actions">
+        <button class="btn btn-encrypt" id="btnEncrypt">加密 ⤵</button>
+        <button class="btn btn-decrypt" id="btnDecrypt">⤴ 解密</button>
+      </div>
+    </div>
+    <div class="pwd-info">密码中出现的不同字符将构成密文的「数字符号集」，即加密的进制（N = 不同字符数，至少 2 个）。</div>
+  </section>
+
+  <!-- 3. 密文区 -->
+  <section class="card">
+    <div class="section-title">
+      <span class="t"><span class="num">3</span>密文区</span>
+      <div class="toolbar">
+        <button class="btn-mini" id="clearCipher">清空</button>
+        <button class="btn-mini" id="copyCipher">复制</button>
+      </div>
+    </div>
+    <textarea id="cipher" placeholder="点击「加密」后密文会显示在这里；也可将密文粘贴到此处，输入同一密码后点击「解密」…"></textarea>
+    <div class="stats" id="cipherStats"></div>
+  </section>
+
+  <footer>
+    加密原理：先把原文编码成字节流并转换为一个大整数，再以「密码中不同字符」作为符号集进行 N 进制表示，
+    因此密文完全由密码中的字符<code>排列组合</code>而成；解密时用同一密码逆向还原，即可恢复原文。<br />
+    <span class="warn">⚠ 请妥善保管密码：忘记密码将无法解密。</span>
+  </footer>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(() => {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const plain = $('plain'), cipher = $('cipher'), pwd = $('pwd');
+  const plainStats = $('plainStats'), cipherStats = $('cipherStats');
+  const pwdInfo = $('pwdInfo');
+
+  /* ---------- 提示 ---------- */
+  let toastTimer = null;
+  function toast(msg, type) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.className = 'show ' + (type || '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.className = ''; }, 2600);
+  }
+
+  /* ---------- 核心算法 ---------- */
+  // 取密码中按首次出现顺序排列的不同字符，作为密文的“数字符号集”
+  function getDigits(pw) {
+    const seen = new Set(), digits = [];
+    for (const ch of pw) { if (!seen.has(ch)) { seen.add(ch); digits.push(ch); } }
+    return digits;
+  }
+
+  // 字节流 -> 大整数（前置 1，保留开头的 0 字节）
+  function bytesToBigInt(bytes) {
+    let n = 1n;
+    for (const b of bytes) n = (n << 8n) | BigInt(b);
+    return n;
+  }
+  // 大整数 -> 字节流（去掉前置的 1）
+  function bigIntToBytes(big) {
+    const bytes = [];
+    while (big > 0n) { bytes.unshift(Number(big & 0xffn)); big >>= 8n; }
+    return Uint8Array.from(bytes);
+  }
+
+  // 大整数 -> 以 digits 为符号集的 N 进制字符串
+  function toBaseN(big, digits) {
+    const n = BigInt(digits.length);
+    let out = '';
+    if (big === 0n) return digits[0];
+    while (big > 0n) {
+      const r = Number(big % n);
+      out = digits[r] + out;
+      big = big / n;
+    }
+    return out;
+  }
+  // N 进制字符串 -> 大整数
+  function fromBaseN(str, digits) {
+    const n = BigInt(digits.length);
+    const map = new Map();
+    digits.forEach((d, i) => map.set(d, BigInt(i)));
+    let big = 0n;
+    for (const ch of str) {
+      const v = map.get(ch);
+      if (v === undefined) throw new Error('密文中含有「' + ch + '」，它不在当前密码的字符集里');
+      big = big * n + v;
+    }
+    return big;
+  }
+
+  function encrypt(plainText, pw) {
+    const digits = getDigits(pw);
+    if (digits.length < 2) throw new Error('密码至少需要包含 2 个不同的字符');
+    const bytes = new TextEncoder().encode(plainText);
+    return toBaseN(bytesToBigInt(bytes), digits);
+  }
+
+  function decrypt(cipherText, pw) {
+    const digits = getDigits(pw);
+    if (digits.length < 2) throw new Error('密码至少需要包含 2 个不同的字符');
+    const num = fromBaseN(cipherText, digits);
+    const bytes = bigIntToBytes(num);
+    if (bytes.length === 0 || bytes[0] !== 0x01) throw new Error('无法用该密码解密，请检查密文或密码是否正确');
+    try {
+      return new TextDecoder('utf-8', { fatal: true }).decode(bytes.subarray(1));
+    } catch {
+      throw new Error('解密结果不是有效文本，请检查密文或密码是否正确');
+    }
+  }
+
+  /* ---------- 界面 ---------- */
+  function updateStats() {
+    plainStats.textContent = '原文：' + plain.value.length + ' 字符';
+    cipherStats.textContent = '密文：' + cipher.value.length + ' 字符';
+    const digits = getDigits(pwd.value);
+    pwdInfo.textContent = digits.length >= 2
+      ? '密码不同字符数：' + digits.length + '（N = ' + digits.length + ' 进制）'
+      : '密码不同字符数：' + digits.length + '（需要至少 2 个不同字符）';
+  }
+
+  $('btnEncrypt').addEventListener('click', () => {
+    try {
+      if (!plain.value) throw new Error('请先在原文区输入内容');
+      if (!pwd.value) throw new Error('请先在密码区输入密码');
+      cipher.value = encrypt(plain.value, pwd.value);
+      updateStats();
+      toast('加密完成，密文已写入密文区', 'ok');
+    } catch (e) { toast(e.message, 'err'); }
+  });
+
+  $('btnDecrypt').addEventListener('click', () => {
+    try {
+      if (!cipher.value) throw new Error('请先在密文区输入内容');
+      if (!pwd.value) throw new Error('请先在密码区输入密码');
+      // 去除复制时可能带入的首尾换行
+      plain.value = decrypt(cipher.value.replace(/^\n+|\n+$/g, ''), pwd.value);
+      updateStats();
+      toast('解密完成，原文已写入原文区', 'ok');
+    } catch (e) { toast(e.message, 'err'); }
+  });
+
+  $('clearPlain').addEventListener('click', () => { plain.value = ''; updateStats(); plain.focus(); });
+  $('clearCipher').addEventListener('click', () => { cipher.value = ''; updateStats(); cipher.focus(); });
+
+  async function copyText(text, okMsg) {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+      }
+      toast(okMsg, 'ok');
+    } catch {
+      toast('复制失败，请手动选择复制', 'err');
+    }
+  }
+  $('copyPlain').addEventListener('click', () => { if (plain.value) copyText(plain.value, '原文已复制'); });
+  $('copyCipher').addEventListener('click', () => { if (cipher.value) copyText(cipher.value, '密文已复制'); });
+
+  plain.addEventListener('input', updateStats);
+  cipher.addEventListener('input', updateStats);
+  pwd.addEventListener('input', updateStats);
+
+  updateStats();
+})();
+</script>
+</body>
+</html>
