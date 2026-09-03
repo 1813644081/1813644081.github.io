@@ -5,26 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PNG 藏图工具</title>
 <style>
-  :root { color-scheme: light dark; }
+  :root { color-scheme: light; }
   * { box-sizing: border-box; }
   body {
     font-family: "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
     margin: 0; padding: 24px; max-width: 980px; margin-inline: auto;
-    background: #f4f6f9; color: #1d2430;
-  }
-  @media (prefers-color-scheme: dark) {
-    body { background: #171b23; color: #dde3ee; }
-    .card { background: #20262f; border-color: #2d3642; }
-    input, button { background: #262d38; color: #e6ecf5; border-color: #3a4554; }
-    code, pre { background: #11151b; }
+    background: linear-gradient(165deg, #e9eefc 0%, #eef1f8 45%, #f7f8fc 100%);
+    color: #1f2430;
   }
   h1 { margin-bottom: 4px; }
   .back {
     display: inline-block; margin-bottom: 14px;
-    padding: 7px 16px; border-radius: 8px;
-    background: #2f6fed; color: #fff; font-size: 13px; text-decoration: none;
+    padding: 7px 16px; border-radius: 999px;
+    background: #eef1ff; color: #4f6ef7;
+    border: 1px solid #e4e8f2; font-size: 13px; font-weight: 600;
+    text-decoration: none;
   }
-  .back:hover { filter: brightness(1.08); }
+  .back:hover { background: #4f6ef7; color: #fff; }
   .sub { opacity: .7; margin: 0 0 20px; }
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
@@ -38,10 +35,14 @@
   .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .row input[type=text] { width: 90px; padding: 6px; }
   button {
-    padding: 8px 14px; border-radius: 8px; border: 1px solid #c8d0da; cursor: pointer;
-    background: #eef2f6; font-size: 14px;
+    padding: 8px 14px; border-radius: 8px; border: 1px solid #e4e8f2; cursor: pointer;
+    background: #fafbfe; font-size: 14px;
   }
-  button.primary { background: #2f6fed; color: #fff; border-color: #2f6fed; }
+  button.primary {
+    background: linear-gradient(135deg, #4f6ef7, #3a58e6);
+    color: #fff; border-color: transparent;
+    box-shadow: 0 4px 14px rgba(79, 110, 247, .35);
+  }
   button:hover { filter: brightness(1.05); }
   .previews { display: flex; gap: 10px; flex-wrap: wrap; min-height: 40px; }
   .previews figure { margin: 0; text-align: center; font-size: 12px; }
