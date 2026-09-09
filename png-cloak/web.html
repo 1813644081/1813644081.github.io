@@ -115,6 +115,7 @@
         <input type="number" id="bitsL" value="3" min="1" max="7" style="width:70px" title="每通道写几位(1-7),越大容量越大、越明显">
         <button class="primary" id="btnHideLsb">LSB 隐藏并下载</button>
       </div>
+      <div class="previews" id="prevEL"></div>
       <pre class="log" id="logEL">等待选择文件…</pre>
       <div class="warn">转 JPEG 也会毁掉低位数据。</div>
     </div>
@@ -196,6 +197,7 @@ function describeBytes(b) {
   if (b[0]===0xff && b[1]===0xd8 && b[2]===0xff) return { label: 'JPEG 图片', ext: 'jpg' };
   if (has('GIF87a') || has('GIF89a')) return { label: 'GIF 图片', ext: 'gif' };
   if (has('RIFF') && has('WEBP', 8)) return { label: 'WebP 图片', ext: 'webp' };
+  if ((b[0]===0x50 && b[1]===0x4b) && (b[2]===0x03 || b[2]===0x05 || b[2]===0x07)) return { label: 'ZIP 压缩包', ext: 'zip' };
   if (has('%PDF')) return { label: 'PDF', ext: 'pdf' };
   return { label: '未知/二进制', ext: 'bin' };
 }
@@ -261,6 +263,7 @@ $('btnHide').addEventListener('click', async () => {
     const iend = chunks.findIndex(c => c.name === 'IEND');
     chunks.splice(iend < 0 ? chunks.length : iend, 0, { name, data: new Uint8Array(secret) });
     const out = buildPng(chunks);
+    const outChunks = parsePng(out); // 重新解析产物,拿到正确偏移用于 CRC 自检
     const meta = describeBytes(secret);
     const view = new DataView(out.buffer, out.byteOffset, out.byteLength);
     const lines = [
@@ -268,7 +271,7 @@ $('btnHide').addEventListener('click', async () => {
       `  藏入: ${fmt(secret.length)} 的 ${meta.label}(chunk ${before} → ${chunks.length})`,
       `  体积: ${fmt(carrier.length)} → ${fmt(out.length)}`,
       `  块: ${chunks.map(c => c.name).join(', ')}`,
-      `  CRC 自检: ${crcCheck(chunks, view) ? '通过 ✓' : '失败 ✗'}`,
+      `  CRC 自检: ${crcCheck(outChunks, view) ? '通过 ✓' : '失败 ✗'}`,
     ];
     logTo(log, lines);
     setPreview($('prevE'), out, '产物预览(能正常显示说明没破坏图片)');
@@ -356,9 +359,9 @@ function lsbEmbed(rgba, payload, name, bits) {
 }
 function lsbExtract(rgba, bits) {
   const maxSlots = Math.floor(rgba.length / 4) * 3;
-  const maxBytes = Math.floor(maxSlots / 8);
   function makeReader(b) {
     const mask = (1 << b) - 1;
+    const capBytes = Math.floor(maxSlots * b / 8);
     let slot = 0, acc = 0, accBits = 0;
     function pull() {
       if (slot >= maxSlots) throw new Error('图片被截断:像素不足');
@@ -368,7 +371,7 @@ function lsbExtract(rgba, bits) {
     }
     return {
       bytes(count) {
-        if (count > maxBytes) throw new Error('数据超出图片容量');
+        if (count > capBytes) throw new Error('数据超出图片容量');
         const out = new Uint8Array(count);
         for (let i = 0; i < count; i++) {
           while (accBits < 8) { acc = (acc << b) | pull(); accBits += b; }
@@ -390,7 +393,7 @@ function lsbExtract(rgba, bits) {
     const nb = r.bytes(nameLen + 4);
     const name = dec.decode(nb.subarray(0, nameLen));
     const len = ((nb[nameLen] << 24) | (nb[nameLen + 1] << 16) | (nb[nameLen + 2] << 8) | nb[nameLen + 3]) >>> 0;
-    if (len > maxBytes - 7 - nameLen - 4) return null;
+    if (len > Math.floor(maxSlots * b / 8) - 7 - nameLen - 4) return null;
     return { bits: head[5], name, payload: r.bytes(len) };
   }
   const list = (bits !== null && bits !== '') ? [Number(bits)] : [7, 6, 5, 4, 3, 2, 1];
@@ -472,7 +475,7 @@ $('btnHideLsb').addEventListener('click', async () => {
     ]);
     const outName = carrierFile.name.replace(/\.png$/i, '') + '_lsb.png';
     downloadBlob(blob, outName);
-    previewBlob($('prevE'), blob, '产物预览(肉眼看不出藏了东西)');
+    previewBlob($('prevEL'), blob, '产物预览(肉眼看不出藏了东西)');
   } catch (e) { logTo(log, '[错误] ' + e.message); }
 });
 
@@ -505,7 +508,7 @@ $('btnExtractLsb').addEventListener('click', async () => {
 $('boxL').addEventListener('change', () => { $('logXL').textContent = '已选文件,点「LSB 提取」。'; });
 $('secretL').addEventListener('change', async () => {
   const f = $('secretL').files[0];
-  if (f) setPreview($('prevE'), await readFile(f), '要藏的内容');
+  if (f) setPreview($('prevEL'), await readFile(f), '要藏的内容');
 });
 </script>
 </body>

@@ -210,11 +210,11 @@ export function embedLsb(rgba, payload, fileName, bits) {
 /** 从 rgba 里读出 LSB 容器;bits 传 null 时自动探测 7..1 */
 export function extractLsb(rgba, bits = null) {
     const maxSlots = Math.floor(rgba.length / 4) * 3;
-    const maxBytes = Math.floor(maxSlots / 8); // 每字节至少 1 位时的上限(保守)
 
     // 带状态的流式读取器:连续字节必须从同一次读取里依次消费,不能各自从头读
     function makeReader(b) {
         const mask = (1 << b) - 1;
+        const capBytes = Math.floor(maxSlots * b / 8); // b 位/通道时最多能容纳的字节数
         let slot = 0, acc = 0, accBits = 0;
         const pull = () => {
             if (slot >= maxSlots) throw new Error('图片被截断:像素不足');
@@ -224,7 +224,7 @@ export function extractLsb(rgba, bits = null) {
         };
         return {
             bytes(count) {
-                if (count > maxBytes) throw new Error('数据超出图片容量');
+                if (count > capBytes) throw new Error('数据超出图片容量');
                 const out = new Uint8Array(count);
                 for (let i = 0; i < count; i++) {
                     while (accBits < 8) { acc = (acc << b) | pull(); accBits += b; }
@@ -247,7 +247,7 @@ export function extractLsb(rgba, bits = null) {
         const nb = r.bytes(parsed.nameLen + 4);          // 接续读:文件名 + 4 字节长度
         const name = Buffer.from(nb.subarray(0, parsed.nameLen)).toString('utf8');
         const len = be32(nb, parsed.nameLen);
-        if (len > maxBytes - 7 - parsed.nameLen - 4) return null; // 长度荒谬,当噪声
+        if (len > Math.floor(maxSlots * b / 8) - 7 - parsed.nameLen - 4) return null; // 长度荒谬,当噪声
         const payload = r.bytes(len);
         return { bits: parsed.bits, name, payload };
     };
