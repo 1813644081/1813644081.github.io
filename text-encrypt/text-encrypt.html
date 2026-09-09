@@ -226,17 +226,20 @@
     return digits;
   }
 
-  // 字节流 -> 大整数（前置 1，保留开头的 0 字节）
+  // 字节流 -> 大整数（前置 1，保留开头的 0 字节；用十六进制一次性构造，避免逐字节位移）
   function bytesToBigInt(bytes) {
-    let n = 1n;
-    for (const b of bytes) n = (n << 8n) | BigInt(b);
-    return n;
+    const parts = ['1'];
+    for (const b of bytes) parts.push(b.toString(16).padStart(2, '0'));
+    return BigInt('0x' + parts.join(''));
   }
-  // 大整数 -> 字节流（去掉前置的 1）
+  // 大整数 -> 字节流（去掉前置的 1；用十六进制一次性展开）
   function bigIntToBytes(big) {
-    const bytes = [];
-    while (big > 0n) { bytes.unshift(Number(big & 0xffn)); big >>= 8n; }
-    return Uint8Array.from(bytes);
+    if (big === 0n) return new Uint8Array(0);
+    let hex = big.toString(16);
+    if (hex.length % 2) hex = '0' + hex;
+    const out = new Uint8Array(hex.length / 2);
+    for (let i = 0; i < out.length; i++) out[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+    return out;
   }
 
   // 大整数 -> 以 digits 为符号集的 N 进制字符串
@@ -309,8 +312,8 @@
     try {
       if (!cipher.value) throw new Error('请先在密文区输入内容');
       if (!pwd.value) throw new Error('请先在密码区输入密码');
-      // 去除复制时可能带入的首尾换行
-      plain.value = decrypt(cipher.value.replace(/^\n+|\n+$/g, ''), pwd.value);
+      // 去除复制粘贴时可能带入的首尾空白(空格/换行/制表符等)
+      plain.value = decrypt(cipher.value.replace(/^\s+|\s+$/g, ''), pwd.value);
       updateStats();
       toast('解密完成，原文已写入原文区', 'ok');
     } catch (e) { toast(e.message, 'err'); }

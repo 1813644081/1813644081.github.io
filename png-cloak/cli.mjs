@@ -107,11 +107,17 @@ function structureReport(bytes) {
         const h = new DataView(ihdr.data.buffer, ihdr.data.byteOffset).getUint32(4);
         const bitDepth = ihdr.data[8];
         const colorType = ihdr.data[9];
+        const interlace = ihdr.data[12];
         const channels = { 0: 1, 2: 3, 3: 1, 4: 2, 6: 4 }[colorType];
-        const bytesPerSample = bitDepth === 16 ? 2 : 1;
         const raw = zlib.inflateSync(Buffer.concat(idats.map((c) => Buffer.from(c.data))));
-        const expected = h * (1 + w * channels * bytesPerSample);
-        lines.push(`  ✓ 像素流可解压: ${w}x${h} colorType=${colorType} 解压 ${fmtBytes(raw.length)} = 理论值 ${fmtBytes(expected)} (${raw.length === expected ? '吻合' : '不一致!'})`);
+        if (channels === undefined) {
+            lines.push(`  ⚠ 像素流可解压 ${fmtBytes(raw.length)}(${w}x${h} 不支持的 colorType=${colorType})`);
+        } else if (interlace !== 0) {
+            lines.push(`  ✓ 像素流可解压: ${w}x${h} colorType=${colorType} 隔行扫描(Adam7),解压 ${fmtBytes(raw.length)},长度未比对`);
+        } else {
+            const expected = h * (1 + Math.ceil(w * channels * bitDepth / 8));
+            lines.push(`  ✓ 像素流可解压: ${w}x${h} colorType=${colorType} 解压 ${fmtBytes(raw.length)} = 理论值 ${fmtBytes(expected)} (${raw.length === expected ? '吻合' : '不一致!'})`);
+        }
     }
     return lines;
 }
