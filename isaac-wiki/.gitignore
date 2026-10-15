@@ -1,0 +1,11 @@
+data/
+site/
+logs/
+extension/config.json
+server.pid
+.mirror-token
+runtime/
+desktop/packages/
+*.dll
+*.exe
+*.pdb

@@ -1,0 +1,7 @@
+runtime/
+downloads/
+data/
+config.json
+__pycache__/
+*.pid
+*.log

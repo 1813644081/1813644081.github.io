@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "以撒 Wiki 本地导出助手",
+  "version": "1.0.0",
+  "description": "通过当前 Chrome 的正常 Wiki 访问，将公开页面和素材保存到本机离线站点。",
+  "permissions": ["activeTab", "scripting"],
+  "host_permissions": [
+    "http://127.0.0.1:8765/*",
+    "https://huiji-public.huijistatic.com/*",
+    "https://huiji-thumb.huijistatic.com/*",
+    "https://fs.huijiwiki.com/*",
+    "https://av.huijiwiki.com/*"
+  ],
+  "background": {"service_worker": "background.js"},
+  "action": {"default_title": "打开 Wiki 全站导出面板"}
+}

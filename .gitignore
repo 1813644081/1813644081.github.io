@@ -1,0 +1,6 @@
+# Local backups and generated Python bytecode.
+# Project-specific credentials, chats, mirrors and runtimes are excluded by
+# the .gitignore files in their respective project directories.
+**/backups/
+**/__pycache__/
+*.pyc
