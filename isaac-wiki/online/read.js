@@ -3,6 +3,7 @@ const article = document.querySelector("#article");
 const source = document.querySelector("#source");
 const searchInput = document.querySelector("input[name=q]");
 const params = new URLSearchParams(location.search);
+const version = new URL(import.meta.url).search;
 const origin = "https://isaac.huijiwiki.com";
 const resultsPerPage = 100;
 
@@ -31,7 +32,7 @@ function link(text, href) {
 }
 
 async function readData(name) {
-  const response = await fetch("./data/" + name + ".bin");
+  const response = await fetch("./data/" + name + ".bin" + version);
   if (!response.ok || !response.body) throw new Error("存档 HTTP " + response.status);
   const json = response.body.pipeThrough(new DecompressionStream("gzip"));
   return new Response(json).json();

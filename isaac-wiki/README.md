@@ -8,4 +8,4 @@ site/ 保存页面、素材、动画和只读索引。reader.mjs、offline.css�
 
 ## GitHub Pages
 
-[在线存档](https://1813644081.github.io/isaac-wiki/online/) 读取 `online/data/` 下的静态正文分包，在浏览器中搜索及打开条目。游戏素材、音频、动画及后台数据页面可通过原文链接访问。在线版与本机完整镜像使用各自的数据目录。
+[在线存档](https://1813644081.github.io/isaac-wiki/online/) 在浏览器中读取 `online/data/` 下的静态正文分包，图片和图标从 `online/media/` 加载。音频、动画及后台数据页面可通过原文链接访问。在线版与本机完整镜像使用各自的数据目录。

@@ -68,6 +68,17 @@ h1 { margin: 0 0 1rem; line-height: 1.25; }
 #article th { background: #edf2ef; }
 #article .navbox { font-size: .875rem; }
 #article pre { overflow-x: auto; padding: .75rem; background: #f4f6f5; }
+#article img { max-width: 100%; height: auto; vertical-align: middle; }
+#article .gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  padding: 0;
+  list-style: none;
+}
+#article .gallerybox { padding: .5rem; border: 1px solid #dce3df; }
+#article :is(.gallerytext, .thumbcaption) { margin-top: .35rem; font-size: .875rem; }
+#article .center { text-align: center; }
 #article .media-label { color: #52635d; font-size: .875em; }
 .results { columns: 15rem; padding-inline-start: 1.5rem; }
 .results li { break-inside: avoid; }
