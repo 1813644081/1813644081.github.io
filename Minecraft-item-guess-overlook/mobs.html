@@ -17,7 +17,8 @@
 @media(max-width:700px){.page{padding:18px 14px 14px}.back{margin-bottom:16px}.heading{gap:10px}.mark{width:38px;height:38px}h1{font-size:21px;letter-spacing:-.4px}.subtitle{font-size:11px}.offline{display:none}.toolbar{margin-top:22px;gap:8px}.actions{gap:5px}.plain-button{font-size:12px;padding:7px 9px}.result{font-size:11px}.result strong{font-size:20px}.instructions{font-size:11px}.scroll-hint{display:none}.table-scroll{max-height:calc(100dvh - 250px);min-height:260px}th:first-child{width:156px}table{min-width:1086px}.filter-chip span{max-width:250px}.table-foot{font-size:10px}.footer{font-size:10px}.popover{width:330px}}
 @media print{.back,.offline,.actions,.instructions,.active-filters,.popover,.name-input,.column-top svg{display:none!important}.page{padding:0}.toolbar{margin:12px 0}.table-scroll{overflow:visible;max-height:none;min-height:0}table{min-width:0;font-size:8px}.tag{font-size:7px;padding:1px 2px}th,td,td:first-child{position:static!important}th:first-child{width:auto}.column-button{min-height:50px;padding:6px;gap:4px}td{padding:5px}.table-frame{overflow:visible;border-radius:0}@page{size:landscape;margin:8mm}}
 .popover{width:380px}.column-summary{white-space:normal;line-height:1.5}.filter-note{font-size:11px;line-height:1.7;margin-top:10px}.tag-option{cursor:default;gap:7px}.tag-choice{display:flex;align-items:center;gap:4px;flex:none;cursor:pointer;font-size:11px;padding:4px 2px}.tag-choice.exclude input{accent-color:#9a4d43}.tag-option.is-included{background:#f0f6e9}.tag-option.is-excluded,.filter-chip.exclusion{background:#fbefed;border-color:#d7b6af}.option-count{margin-right:4px}
-.game-nav{display:flex;gap:12px;flex-wrap:wrap;margin:14px 0 4px;font-size:12px}</style>
+.filter-links{display:flex;flex-wrap:wrap;column-gap:14px;row-gap:4px}
+</style>
 </head>
 <body>
 <main class="page">
@@ -26,7 +27,6 @@
     <div class="heading"><div class="mark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="#000" stroke-width="1.2"><path fill="#deebd3" d="m16 3 12 7-12 7-12-7z"/><path fill="#fff" d="m4 10 12 7v13L4 23z"/><path fill="#c8d9ba" d="m16 17 12-7v13l-12 7z"/><path d="m10 6.5 12 7M10 13.5l12-7M10 13.5v13M22 13.5v13M4 16.5l12 7 12-7"/></svg></div><div><h1>Minecraft 生物筛选表</h1><p class="subtitle">名称检索 · 按原表分类的标签 · 88 种生物</p></div></div>
     <span class="offline">可离线使用</span>
   </div>
-  <nav class="game-nav" aria-label="Minecraft 筛选表"><a href="index.html">物品筛选表</a><a href="blocks.html">方块筛选表</a><a href="mobs.html">生物筛选表</a></nav>
   <div class="toolbar">
     <p id="result-count" class="result" role="status" aria-live="polite" aria-atomic="true"><strong>88</strong> / 88 个生物</p>
     <div class="actions"><button class="plain-button" id="reset-all" type="button" disabled>清空筛选</button><button class="plain-button primary" id="export-results" type="button">导出结果</button></div>
@@ -43,7 +43,7 @@
     </div>
     <div class="table-foot"><span id="table-summary">显示全部 88 个生物</span><span>名称列与表头固定</span></div>
   </div>
-  <footer class="footer"><span>数据：幽幽子机器人原始表格 · 标签按原文保留</span><span>参考：<a href="https://zh.minecraft.wiki/w/生物" target="_blank" rel="noopener noreferrer">Minecraft 中文维基</a></span></footer>
+  <footer class="footer"><span>数据：幽幽子机器人原始表格 · 标签按原文保留</span><span>参考：<a href="https://zh.minecraft.wiki/w/生物" target="_blank" rel="noopener noreferrer">Minecraft 中文维基</a></span><nav class="filter-links" aria-label="其他 Minecraft 筛选表"><span>其他筛选表：</span><a href="index.html">物品筛选表</a><a href="blocks.html">方块筛选表</a></nav></footer>
   <noscript><p style="padding:20px 0">此表格需要启用 JavaScript 才能显示生物和使用筛选功能。</p></noscript>
 </main>
 <section id="filter-popover" class="popover" role="dialog" aria-labelledby="popover-title" hidden>
