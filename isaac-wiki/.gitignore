@@ -1,4 +1,5 @@
 data/
+!/online/data/
 site/
 logs/
 extension/config.json

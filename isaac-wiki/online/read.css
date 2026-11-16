@@ -1,0 +1,90 @@
+:root {
+  font-family: "Microsoft YaHei", system-ui, sans-serif;
+  color: #262d30;
+  background: #f4f2ec;
+}
+
+body { margin: 0; }
+a { color: #205d76; text-underline-offset: .18em; }
+button, input { font: inherit; }
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .85rem max(1rem, calc((100% - 70rem) / 2));
+  background: #182c35;
+  color: white;
+  border-bottom: 3px solid #a8dabf;
+}
+
+.topbar a { color: #d2eee0; white-space: nowrap; }
+.brand { font-size: 1.125rem; font-weight: 700; text-decoration: none; }
+.topbar nav, .pagination { display: flex; gap: 1rem; align-items: center; }
+.topbar form { display: flex; gap: .5rem; flex: 1; max-width: 28rem; }
+input[type=search] {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  padding: .45rem .65rem;
+  border: 1px solid #91a6a5;
+  border-radius: .3rem;
+}
+
+button {
+  padding: .45rem .75rem;
+  border: 0;
+  border-radius: .3rem;
+  background: #a8dabf;
+  color: #10271d;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+main {
+  max-width: 70rem;
+  margin: 1.5rem auto;
+  padding: 1.5rem clamp(1rem, 3vw, 2rem);
+  background: #fff;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.notice {
+  margin: 0 0 1.25rem;
+  padding: .6rem .85rem;
+  border-inline-start: 3px solid #498a75;
+  background: #edf5f1;
+  color: #344b43;
+  font-size: .9rem;
+}
+
+h1 { margin: 0 0 1rem; line-height: 1.25; }
+#article { min-height: 42vh; overflow-x: auto; }
+#article h2 { border-bottom: 1px solid #dce3df; }
+#article table { border-collapse: collapse; margin: .75rem 0; }
+#article :is(td, th) { padding: .3rem .55rem; border: 1px solid #d7dfda; }
+#article th { background: #edf2ef; }
+#article .navbox { font-size: .875rem; }
+#article pre { overflow-x: auto; padding: .75rem; background: #f4f6f5; }
+#article .media-label { color: #52635d; font-size: .875em; }
+.results { columns: 15rem; padding-inline-start: 1.5rem; }
+.results li { break-inside: avoid; }
+footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem 1rem;
+  margin-top: 2rem;
+  border-top: 1px solid #dce3df;
+  padding-top: .85rem;
+  font-size: .875rem;
+}
+
+#source { display: contents; }
+
+@media (max-width: 45rem) {
+  .topbar { flex-wrap: wrap; justify-content: space-between; }
+  .topbar form { order: 1; max-width: none; flex-basis: 100%; }
+  main { margin: 0; }
+}
